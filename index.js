@@ -8,20 +8,23 @@ const vk = new VK({
 });
 
 async function main() {
-  setInterval(async () => {
-    const data = await getCurrentKryptexStats(process.env.COOKIE);
-    await vk.api.messages.send({
-      user_id: process.env.USER_ID,
-      random_id: Date.now(),
-      message: `${new Date().toLocaleString()}\nВсего решений: ${
-        data[0]
-      }\nПодтвержденные решения: ${data[1]}\nПроверяемые решения: ${
-        data[2]
-      }\nДоступно для выплаты: ${data[3]}\nЗапрошены к снятию: ${
-        data[4]
-      }\nДоход за всё время: ${data[5]}`,
-    });
-  }, 3600000);
+  setInterval(loop, 3600000);
+}
+
+async function loop() {
+  const data = await getCurrentKryptexStats(process.env.COOKIE);
+  const btc = await getCurrentBtc();
+  await vk.api.messages.send({
+    user_id: process.env.USER_ID,
+    random_id: Date.now(),
+    message: `${new Date().toLocaleString()}\n\nВсего решений: ${
+      data[0]
+    }\nПодтвержденные решения: ${data[1]}\nПроверяемые решения: ${
+      data[2]
+    }\nДоступно для выплаты: ${data[3]}\nЗапрошены к снятию: ${
+      data[4]
+    }\nДоход за всё время: ${data[5]}\n\nКурс BTC: $${btc}`,
+  });
 }
 
 function getCurrentKryptexStats(cookieRaw) {
@@ -40,6 +43,11 @@ function getCurrentKryptexStats(cookieRaw) {
     }
     res(arr);
   });
+}
+
+async function getCurrentBtc() {
+  const { data } = await axios.get("https://blockchain.info/ticker");
+  return data.USD.last;
 }
 
 main();
